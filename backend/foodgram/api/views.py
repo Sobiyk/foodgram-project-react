@@ -81,7 +81,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         if request.method == 'POST':
             if (request.user == author or Subscription.objects.filter(
-              user=user, author=author)):
+                user=user, author=author)):
                 content = {'errors': 'Нельзя подписаться'}
                 return Response(content,
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -157,20 +157,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if favorite.objects.filter(
                 recipe_id=recipe.id,
                 user_id=request.user.id
-              ):
+                ):
                 content = {'errors': 'Вы уже добавили этот рецепт в избранное'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             favorite.objects.create(
                 recipe_id=recipe.id,
                 user_id=request.user.id
-                )
+            )
             serializer = RecipeSubSerializer(recipe)
             return Response(serializer.data)
         try:
             favorite.objects.get(
                 recipe_id=recipe.id,
                 user_id=request.user.id
-                ).delete()
+            ).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except ObjectDoesNotExist:
             content = {'errors': 'Рецепт отсутствует в избранном'}
@@ -184,20 +184,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if cart.objects.filter(
                 recipe_id=recipe.id,
                 user_id=request.user.id
-              ):
+                ):
                 content = {'errors': 'Рецепт уже в списке покупок'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             cart.objects.create(
                 recipe_id=recipe.id,
                 user_id=request.user.id
-                )
+            )
             serializer = RecipeSubSerializer(recipe)
             return Response(serializer.data)
         try:
             cart.objects.get(
                 recipe_id=recipe.id,
                 user_id=request.user.id
-                ).delete()
+            ).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except ObjectDoesNotExist:
             content = {'errors': 'Рецепт отсутствует в списке покупок'}
@@ -223,7 +223,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         text_content = ''
         for key, value in tmp_cart.items():
             text_content += f'{key}: {value}\n'
-        
+
         now = dateformat.format(timezone.now(), 'd-m-Y H-i')
         response = HttpResponse(content_type='text/plain')
         response['Content-Disposition'] = (f'attachment;'
@@ -244,5 +244,5 @@ class SubscriptionViewSet(ListViewSet):
         queryset = self.request.user.follower.all()
         user_queryset = User.objects.filter(
             id__in=queryset.values('author_id')
-            )
+        )
         return user_queryset
