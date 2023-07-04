@@ -43,9 +43,9 @@ class UserViewSet(viewsets.ModelViewSet):
         return UserSerializer
 
     @action(
-            detail=False,
-            methods=['post'],
-            permission_classes=[IsAuthenticated]
+        detail=False,
+        methods=['post'],
+        permission_classes=[IsAuthenticated]
     )
     def set_password(self, request):
         serializer = ChangePasswordSerializer(data=request.data)
@@ -80,8 +80,8 @@ class UserViewSet(viewsets.ModelViewSet):
         author = get_object_or_404(User, pk=pk)
 
         if request.method == 'POST':
-            if (request.user == author or Subscription.objects.filter(
-                user=user, author=author)):
+            exists = Subscription.objects.filter(user=user, author=author)
+            if request.user == author or exists:
                 content = {'errors': 'Нельзя подписаться'}
                 return Response(content,
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -154,10 +154,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
         favorite = request.user.favorite_list.through
         if request.method == 'POST':
-            if favorite.objects.filter(
-                recipe_id=recipe.id,
-                user_id=request.user.id
-                ):
+            exists = favorite.objects.filter(recipe_id=recipe.id,
+                                             user_id=request.user.id)
+            if exists:
                 content = {'errors': 'Вы уже добавили этот рецепт в избранное'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             favorite.objects.create(
@@ -181,10 +180,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
         cart = request.user.cart.through
         if request.method == 'POST':
-            if cart.objects.filter(
-                recipe_id=recipe.id,
-                user_id=request.user.id
-                ):
+            exists = cart.objects.filter(recipe_id=recipe.id,
+                                         user_id=request.user.id)
+            if exists:
                 content = {'errors': 'Рецепт уже в списке покупок'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             cart.objects.create(
