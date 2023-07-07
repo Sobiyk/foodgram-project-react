@@ -20,17 +20,14 @@ class RecipeFilter(filters.FilterSet):
 
     def filter_is_favorited(self, queryset, name, value):
         value = bool(int(value))
-        print(name)
-        queryset1 = self.request.user.favorite_list.all()
+        user_fav_list = self.request.user.favorite_list.all()
         if value:
-            return queryset.filter(id__in=queryset1)
-        else:
-            return queryset.filter(~Q(id__in=queryset1))
+            return queryset.filter(id__in=user_fav_list)
+        return queryset.filter(~Q(id__in=user_fav_list))
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         value = bool(int(value))
-        queryset1 = self.request.user.cart.all()
+        user_cart_list = self.request.user.cart.all()
         if value:
-            return queryset.filter(id__in=queryset1)
-        else:
-            return queryset.filter(~Q(id__in=queryset1))
+            return queryset.filter(id__in=user_cart_list)
+        return queryset.filter(~Q(id__in=user_cart_list))

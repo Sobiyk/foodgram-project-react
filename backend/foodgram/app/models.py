@@ -50,7 +50,7 @@ class Recipe(models.Model):
                                related_name='recipes'
                                )
     ingredients = models.ManyToManyField(Ingredient,
-                                         through='RecipeIngredients',
+                                         through='RecipeIngredient',
                                          related_name='recipes'
                                          )
     name = models.CharField('Название', max_length=200, null=False,
@@ -74,10 +74,11 @@ class Recipe(models.Model):
         return self.name
 
 
-class RecipeIngredients(models.Model):
+class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
                                related_name='recipe_ing')
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
+                                   related_name='recipe_ing')
     amount = models.PositiveSmallIntegerField(blank=False,
                                               null=False,
                                               validators=[validate_not_zero])

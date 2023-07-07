@@ -1,12 +1,12 @@
-from django.contrib.auth import get_user_model, hashers
-from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import dateformat, timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 
 from .filters import RecipeFilter
@@ -15,9 +15,10 @@ from .permissions import IsOwnerOrAdmin, ReadOnly
 from .serializers import (
     ChangePasswordSerializer, IngredientSerializer, RecipeSerializer,
     RecipeSubSerializer, TagSerializer, UserSerializer, UserSignUpSerializer,
-    UserSubSerializer,
+    UserSubSerializer, RecipeReadSerializer
 )
-from app.models import Ingredient, Recipe, RecipeIngredients, Subscription, Tag
+from .utils import add_to_list
+from app.models import Ingredient, Recipe, RecipeIngredient, Subscription, Tag
 
 User = get_user_model()
 
@@ -48,18 +49,12 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def set_password(self, request):
-        serializer = ChangePasswordSerializer(data=request.data)
-        if serializer.is_valid():
-            input_data = serializer.validated_data
-            cur_password = input_data.get('current_password')
-            new_password = input_data.get('new_password')
-            if hashers.check_password(cur_password, request.user.password):
-                request.user.set_password(new_password)
-                request.user.save()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            content = {'current_password': 'Неверный пароль'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = ChangePasswordSerializer(data=request.data,
+                                              context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        request.user.set_password(serializer.validated_data['new_password'])
+        request.user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
@@ -78,9 +73,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def subscribe(self, request, pk=None):
         user = self.request.user
         author = get_object_or_404(User, pk=pk)
-
+        exists = Subscription.objects.filter(user=user, author=author).exists()
         if request.method == 'POST':
-            exists = Subscription.objects.filter(user=user, author=author)
             if request.user == author or exists:
                 content = {'errors': 'Нельзя подписаться'}
                 return Response(content,
@@ -91,7 +85,7 @@ class UserViewSet(viewsets.ModelViewSet):
                                            context={'request': request})
             return Response(serializer.data)
 
-        if Subscription.objects.filter(user=user, author=author):
+        if exists:
             Subscription.objects.filter(user=user, author=author).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         content = {'errors': 'Вы не были подписаны на этого пользователя'}
@@ -121,6 +115,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
 
+    def get_serializer_class(self):
+        if self.request.method in SAFE_METHODS:
+            return RecipeReadSerializer
+        return RecipeSerializer
+
     def get_permissions(self):
         permission_classes = []
         if self.action in ['create', 'shopping_cart', 'favorite']:
@@ -132,96 +131,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return [permission() for permission in permission_classes]
 
-    def retrieve(self, request, *args, **kwargs):
-        ret = super().retrieve(request, *args, **kwargs)
-        for ing in ret.data['ingredients']:
-            ing['amount'] = get_object_or_404(RecipeIngredients,
-                                              recipe=self.get_object(),
-                                              ingredient=ing['id']).amount
-        return ret
-
-    def list(self, request, *args, **kwargs):
-        ret = super().list(request, *args, **kwargs)
-        for recipe in ret.data['results']:
-            for ing in recipe['ingredients']:
-                ing['amount'] = get_object_or_404(RecipeIngredients,
-                                                  recipe=recipe['id'],
-                                                  ingredient=ing['id']).amount
-        return ret
-
     @action(methods=['post', 'delete'], detail=True)
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         favorite = request.user.favorite_list.through
-        if request.method == 'POST':
-            exists = favorite.objects.filter(recipe_id=recipe.id,
-                                             user_id=request.user.id)
-            if exists:
-                content = {'errors': 'Вы уже добавили этот рецепт в избранное'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-            favorite.objects.create(
-                recipe_id=recipe.id,
-                user_id=request.user.id
-            )
-            serializer = RecipeSubSerializer(recipe)
-            return Response(serializer.data)
-        try:
-            favorite.objects.get(
-                recipe_id=recipe.id,
-                user_id=request.user.id
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except ObjectDoesNotExist:
-            content = {'errors': 'Рецепт отсутствует в избранном'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        return add_to_list(recipe, favorite, request)
 
     @action(methods=['post', 'delete'], detail=True)
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
         cart = request.user.cart.through
-        if request.method == 'POST':
-            exists = cart.objects.filter(recipe_id=recipe.id,
-                                         user_id=request.user.id)
-            if exists:
-                content = {'errors': 'Рецепт уже в списке покупок'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-            cart.objects.create(
-                recipe_id=recipe.id,
-                user_id=request.user.id
-            )
-            serializer = RecipeSubSerializer(recipe)
-            return Response(serializer.data)
-        try:
-            cart.objects.get(
-                recipe_id=recipe.id,
-                user_id=request.user.id
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except ObjectDoesNotExist:
-            content = {'errors': 'Рецепт отсутствует в списке покупок'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        return add_to_list(recipe, cart, request)
 
     @action(methods=['get'],
             detail=False,
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        cart_content = request.user.cart.all()
-        tmp_cart = {}
-        for recipe in cart_content:
-            for ingredient in recipe.ingredients.all():
-                if ingredient.name not in tmp_cart:
-                    tmp_obj = get_object_or_404(
-                        RecipeIngredients,
-                        recipe=recipe,
-                        ingredient=ingredient)
-                    tmp_cart[ingredient.name] = tmp_obj.amount
-                else:
-                    tmp_cart[ingredient.name] += tmp_obj.amount
-
+        cart = request.user.cart.all()
+        ingredients = RecipeIngredient.objects.select_related('recipe').filter(
+            recipe_id__in=cart).values(
+                'ingredient__name',
+                'ingredient__measurement_unit').annotate(
+                    sum_amount=Sum('amount'))
         text_content = ''
-        for key, value in tmp_cart.items():
-            text_content += f'{key}: {value}\n'
-
+        for ing in ingredients:
+            text_content += (f'{ing["ingredient__name"]}: '
+                             f'{ing["sum_amount"]} '
+                             f'{ing["ingredient__measurement_unit"]}\n')
         now = dateformat.format(timezone.now(), 'd-m-Y H-i')
         response = HttpResponse(content_type='text/plain')
         response['Content-Disposition'] = (f'attachment;'
