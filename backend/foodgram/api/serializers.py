@@ -1,7 +1,5 @@
 from django.contrib.auth import get_user_model, hashers, password_validation
-from django.shortcuts import get_list_or_404, get_object_or_404
 from rest_framework import serializers
-from rest_framework.fields import empty
 
 from .fields import Base64ImageField
 from .utils import add_ingredients
@@ -107,7 +105,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name', 'image', 'text',
                   'cooking_time')
-    
+
     def get_is_favorited(self, obj):
         if self.context['request'].user.is_authenticated:
             return obj.user_favorite.filter(
@@ -133,7 +131,7 @@ class RecipeSerializer(RecipeReadSerializer):
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name', 'image', 'text',
                   'cooking_time')
-        
+
     def validate_ingredients(self, ingredients):
         unique_ing = []
         for ingredient in ingredients:
@@ -201,8 +199,9 @@ class ChangePasswordSerializer(serializers.Serializer):
         if password_validation.validate_password(value) is None:
             return value
         raise serializers.ValidationError('Неверный пароль')
-    
+
     def validate_current_password(self, value):
-        if hashers.check_password(value, self.context['request'].user.password):
+        if hashers.check_password(value,
+                                  self.context['request'].user.password):
             return value
         raise serializers.ValidationError('Неверный пароль')

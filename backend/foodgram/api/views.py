@@ -13,9 +13,9 @@ from .filters import RecipeFilter
 from .mixins import ListRetrieveViewSet, ListViewSet
 from .permissions import IsOwnerOrAdmin, ReadOnly
 from .serializers import (
-    ChangePasswordSerializer, IngredientSerializer, RecipeSerializer,
-    RecipeSubSerializer, TagSerializer, UserSerializer, UserSignUpSerializer,
-    UserSubSerializer, RecipeReadSerializer
+    ChangePasswordSerializer, IngredientSerializer, RecipeReadSerializer,
+    RecipeSerializer, TagSerializer, UserSerializer, UserSignUpSerializer,
+    UserSubSerializer
 )
 from .utils import add_to_list
 from app.models import Ingredient, Recipe, RecipeIngredient, Subscription, Tag
