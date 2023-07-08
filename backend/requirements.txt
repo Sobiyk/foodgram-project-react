@@ -10,3 +10,4 @@ djangorestframework==3.14.0
 django-filter==23.2
 python-dotenv==0.21.1
 requests==2.31.0
+gunicorn==20.1.0
