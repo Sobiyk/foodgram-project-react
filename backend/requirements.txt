@@ -11,3 +11,4 @@ django-filter==23.2
 python-dotenv==0.21.1
 requests==2.31.0
 gunicorn==20.1.0
+psycopg2-binary==2.8.6
