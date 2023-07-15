@@ -1,7 +1,6 @@
+from app.models import Recipe
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
-from app.models import Recipe
 from users.validators import UsernameValidator
 
 USER = 'user'

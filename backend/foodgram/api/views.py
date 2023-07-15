@@ -1,3 +1,4 @@
+from app.models import Ingredient, Recipe, RecipeIngredient, Subscription, Tag
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
@@ -17,7 +18,6 @@ from .serializers import (ChangePasswordSerializer, IngredientSerializer,
                           TagSerializer, UserSerializer, UserSignUpSerializer,
                           UserSubSerializer)
 from .utils import add_to_list
-from app.models import Ingredient, Recipe, RecipeIngredient, Subscription, Tag
 
 User = get_user_model()
 
