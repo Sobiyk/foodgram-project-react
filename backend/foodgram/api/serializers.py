@@ -9,6 +9,7 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """ Сериализатор для работы с пользователями. """
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -24,6 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserSignUpSerializer(serializers.ModelSerializer):
+    """ Сериализатор для работы с пользователями при регистрации. """
 
     class Meta:
         model = User
@@ -51,6 +53,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """ Сериализатор для работы с тегами. """
 
     class Meta:
         model = Tag
@@ -58,6 +61,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """ Сериализатор для работы с ингредиентами. """
 
     class Meta:
         model = Ingredient
@@ -65,6 +69,9 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSubSerializer(serializers.ModelSerializer):
+    """ Сериализатор для работы с рецептами при выводе
+        списка подписок.
+    """
     image = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -76,6 +83,7 @@ class RecipeSubSerializer(serializers.ModelSerializer):
 
 
 class IngredientInRecipeCreateSerializer(serializers.ModelSerializer):
+    """ Сериализатор для работы с ингредиентами при создании рецепта. """
     recipe = serializers.PrimaryKeyRelatedField(read_only=True)
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all()
@@ -88,6 +96,7 @@ class IngredientInRecipeCreateSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecSerializer(serializers.ModelSerializer):
+    """ Сериализатор для работы с ингредиентами при выводе списка рецептов. """
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
@@ -100,6 +109,7 @@ class IngredientRecSerializer(serializers.ModelSerializer):
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
+    """ Сериализатор для чтения рецептов. """
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
@@ -131,6 +141,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(RecipeReadSerializer):
+    """ Сериализатор для записи рецептов. """
     image = Base64ImageField()
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                               many=True)
@@ -180,6 +191,7 @@ class RecipeSerializer(RecipeReadSerializer):
 
 
 class UserSubSerializer(UserSerializer):
+    """ Сериализатор для работы с пользователями при выводе списка подписок """
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
@@ -197,6 +209,7 @@ class UserSubSerializer(UserSerializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
+    """ Сериализатор для смены пароля. """
     new_password = serializers.CharField(trim_whitespace=False)
     current_password = serializers.CharField(trim_whitespace=False)
 
