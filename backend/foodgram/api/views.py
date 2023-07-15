@@ -6,17 +6,16 @@ from django.utils import dateformat, timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import ListRetrieveViewSet, ListViewSet
 from .permissions import IsOwnerOrAdmin, ReadOnly
-from .serializers import (
-    ChangePasswordSerializer, IngredientSerializer, RecipeReadSerializer,
-    RecipeSerializer, TagSerializer, UserSerializer, UserSignUpSerializer,
-    UserSubSerializer
-)
+from .serializers import (ChangePasswordSerializer, IngredientSerializer,
+                          RecipeReadSerializer, RecipeSerializer,
+                          TagSerializer, UserSerializer, UserSignUpSerializer,
+                          UserSubSerializer)
 from .utils import add_to_list
 from app.models import Ingredient, Recipe, RecipeIngredient, Subscription, Tag
 
