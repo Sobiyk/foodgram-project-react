@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 
-from .filters import RecipeFilter
+from .filters import IngredientFilter, RecipeFilter
 from .mixins import ListRetrieveViewSet, ListViewSet
 from .permissions import IsOwnerOrAdmin, ReadOnly
 from .serializers import (
@@ -104,8 +104,8 @@ class IngredientViewSet(ListRetrieveViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [ReadOnly]
     pagination_class = None
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['^name']
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -176,7 +176,6 @@ class SubscriptionViewSet(ListViewSet):
 
     def get_queryset(self):
         queryset = self.request.user.follower.all()
-        user_queryset = User.objects.filter(
+        return User.objects.filter(
             id__in=queryset.values('author_id')
         )
-        return user_queryset

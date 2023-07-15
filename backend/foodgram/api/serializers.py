@@ -34,6 +34,9 @@ class UserSignUpSerializer(serializers.ModelSerializer):
     def validate_password(self, value):
         if password_validation.validate_password(value) is None:
             return value
+        raise serializers.ValidationError(
+            'Пароль не прошел валидацию'
+        )
 
     def create(self, validated_data):
         user = User(
@@ -62,10 +65,14 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSubSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
+
+    def get_image(self, obj):
+        return obj.image.url
 
 
 class IngredientInRecipeCreateSerializer(serializers.ModelSerializer):
@@ -99,12 +106,16 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     ingredients = IngredientRecSerializer(read_only=True, many=True,
                                           source='recipe_ing')
+    image = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name', 'image', 'text',
                   'cooking_time')
+
+    def get_image(self, obj):
+        return obj.image.url
 
     def get_is_favorited(self, obj):
         if self.context['request'].user.is_authenticated:
@@ -198,7 +209,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate_new_password(self, value):
         if password_validation.validate_password(value) is None:
             return value
-        raise serializers.ValidationError('Неверный пароль')
+        raise serializers.ValidationError('Новый пароль не пошел валидацию')
 
     def validate_current_password(self, value):
         if hashers.check_password(value,
