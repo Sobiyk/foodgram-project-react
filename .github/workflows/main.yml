@@ -21,7 +21,7 @@ jobs:
         cd backend/
         pip install -r requirements.txt
     
-    - name: Test with flake8 and pytest
+    - name: Test with flake8
       run: |
         python -m flake8
 
@@ -64,6 +64,7 @@ jobs:
             key: ${{ secrets.SSH_KEY }}
             passphrase: ${{ secrets.PASSPHRASE }}
             script: |
+              cd foodgram-project/infra/
               sudo docker-compose stop
               sudo docker-compose rm web
               touch .env
