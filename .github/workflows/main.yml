@@ -67,6 +67,7 @@ jobs:
               cd foodgram-project/infra/
               sudo rm .env
               sudo docker-compose down
+              sudo docker pull ${{ secrets.DOCKER_LOGIN }}/foodgram_back:latest
               touch .env
               echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
               echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
