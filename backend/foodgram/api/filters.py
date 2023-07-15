@@ -37,6 +37,7 @@ class RecipeFilter(filters.FilterSet):
 
 
 class IngredientFilter(filters.FilterSet):
+    """Фильтр по полям объекта модели ингредиента"""
     name = filters.CharFilter(lookup_expr='istartswith')
 
     class Meta:
