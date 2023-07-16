@@ -1,9 +1,9 @@
-from app.models import Ingredient, Recipe, RecipeIngredient, Tag
 from django.contrib.auth import get_user_model, hashers, password_validation
 from rest_framework import serializers
 
 from .fields import Base64ImageField
 from .utils import add_ingredients
+from app.models import Ingredient, Recipe, RecipeIngredient, Tag
 
 User = get_user_model()
 
@@ -93,6 +93,13 @@ class IngredientInRecipeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ('recipe', 'id', 'amount')
+
+    def validate_amount(self, amount):
+        if amount <= 0:
+            raise serializers.ValidationError(
+                'Количество ингредиента не может быть отрицательным'
+            )
+        return amount
 
 
 class IngredientRecSerializer(serializers.ModelSerializer):

@@ -1,4 +1,3 @@
-from app.models import Ingredient, Recipe, RecipeIngredient, Subscription, Tag
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
@@ -12,12 +11,14 @@ from rest_framework.response import Response
 
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import ListRetrieveViewSet, ListViewSet
+from .pagination import RecipePagination
 from .permissions import IsOwnerOrAdmin, ReadOnly
 from .serializers import (ChangePasswordSerializer, IngredientSerializer,
                           RecipeReadSerializer, RecipeSerializer,
                           TagSerializer, UserSerializer, UserSignUpSerializer,
                           UserSubSerializer)
 from .utils import add_to_list
+from app.models import Ingredient, Recipe, RecipeIngredient, Subscription, Tag
 
 User = get_user_model()
 
@@ -113,6 +114,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
+    pagination_class = RecipePagination
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
@@ -172,6 +174,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class SubscriptionViewSet(ListViewSet):
     serializer_class = UserSubSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = RecipePagination
 
     def get_queryset(self):
         queryset = self.request.user.follower.all()
