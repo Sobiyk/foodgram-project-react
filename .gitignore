@@ -134,3 +134,5 @@ dmypy.json
 # media
 /media
 
+# cfg
+.cfg
